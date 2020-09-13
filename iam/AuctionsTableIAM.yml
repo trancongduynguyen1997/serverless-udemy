@@ -1,0 +1,16 @@
+AuctionsTableIAM:
+    Effect: Allow
+    Action:
+        - dynamodb:PutItem
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+        - dynamodb:Query
+        # * Query action works with virtual table for indices due to using GSI, so we need to define aws resource
+    Resource:
+        - ${self:custom.AuctionsTable.arn}
+        - !Join [
+              "/",
+              ["${self:custom.AuctionsTable.arn}", "index", "statusAndEndDate"],
+          ]
+        # * this equal ${self:custom.AuctionsTable.arn}/index/statusAndEndDate -> arn for virtual table

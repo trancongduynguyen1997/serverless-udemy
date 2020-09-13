@@ -1,0 +1,24 @@
+AuctionsTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: AuctionsTable-${self:provider.stage} # * self reference to the application yml
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: status
+        AttributeType: S
+      - AttributeName: endAt
+        AttributeType: S
+    KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+    GlobalSecondaryIndexes:
+      - IndexName: statusAndEndDate
+        KeySchema:
+          - AttributeName: status
+            KeyType: HASH
+          - AttributeName: endAt
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL

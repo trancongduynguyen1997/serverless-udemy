@@ -1,0 +1,58 @@
+service:
+    name: auction-service # * present as deployment service name
+
+plugins:
+    - serverless-bundle # * allow to use webpack to bundle
+    - serverless-pseudo-parameters # * allow to interpolate aws pseudo parameters using #{AWS::parameter}
+
+provider: # * tell sls about cloud provider info
+    name: aws
+    runtime: nodejs12.x
+    memorySize: 256
+    stage: ${opt:stage, 'dev'} # * define stage of deployment: dev, prod, test...
+    region: ap-southeast-1
+    environment:
+        AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
+    iamRoleStatements:
+        - ${file(iam/AuctionsTableIAM.yml):AuctionsTableIAM}
+
+resources: # * define resources used in aws which uses cloudformation syntax
+    Resources:
+        AuctionsTable: # * logical id of the resource
+            ${file(resources/AuctionsTable.yml):AuctionsTable}
+
+functions:
+    createAuction:
+        handler: src/handlers/createAuction.handler
+        events: # * events to trigger function
+            - http:
+                  method: POST
+                  path: /auction
+    getAuctions:
+        handler: src/handlers/getAuctions.handler
+        events: # * events to trigger function
+            - http:
+                  method: GET
+                  path: /auctions
+    getAuction:
+        handler: src/handlers/getAuction.handler
+        events: # * events to trigger function
+            - http:
+                  method: GET
+                  path: /auction/{id}
+    placeBid:
+        handler: src/handlers/placeBid.handler
+        events: # * events to trigger function
+            - http:
+                  method: PATCH
+                  path: /auction/{id}/bid
+    processAuctions:
+        handler: src/handlers/processAuctions.handler
+        # events:
+        #     - schedule: rate(1 minute) # * trigger function every minute
+custom: # * define own variables used within yml files which are outside of core services
+    AuctionsTable:
+        name: !Ref AuctionsTable
+        arn: !GetAtt AuctionsTable.Arn
+    bundle:
+        linting: false
